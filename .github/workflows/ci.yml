@@ -24,6 +24,9 @@ jobs:
       - name: Validate Python syntax
         run: python -m compileall -q cron-scheduler greenops-dashboard
 
+      - name: Run policy tests
+        run: python -m unittest discover -s tests -v
+
       - name: Build batch processor image
         run: docker build -t batch-processor:ci -f cron-scheduler/Dockerfile.batch cron-scheduler
 
@@ -31,4 +34,4 @@ jobs:
         run: docker build -t carbon-scheduler:ci cron-scheduler
 
       - name: Build dashboard image
-        run: docker build -t greenops-dashboard:ci greenops-dashboard
+        run: docker build -t greenops-dashboard:ci -f greenops-dashboard/Dockerfile .

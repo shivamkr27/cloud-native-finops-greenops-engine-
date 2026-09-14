@@ -33,6 +33,10 @@ except ImportError:
     client = None
     config = None
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cron-scheduler"))
+from policy import parse_carbon_intensity
+
 if Flask is not None:
     app = Flask(__name__)
 else:
@@ -115,11 +119,24 @@ def update_karpenter_simulation():
 def index():
     return render_template("index.html")
 
+
+@app.route("/healthz")
+def healthz():
+    return jsonify({"status": "ok", "service": "greenops-dashboard"})
+
+
+@app.route("/readyz")
+def readyz():
+    return jsonify({"status": "ready", "kubernetes": k8s_available})
+
 @app.route("/api/carbon-intensity", methods=["GET", "POST"])
 def carbon_intensity():
     if request.method == "POST":
         data = request.json or {}
-        new_val = int(data.get("carbon_intensity", 220))
+        try:
+            new_val = parse_carbon_intensity(data.get("carbon_intensity", 220))
+        except ValueError as error:
+            return jsonify({"status": "error", "message": str(error)}), 400
         state["carbon_intensity"] = new_val
         add_log(f"Carbon intensity manually overridden to {new_val} gCO2/kWh.")
         update_karpenter_simulation()
@@ -155,6 +172,8 @@ def status():
 def toggle_waste_alert():
     data = request.json or {}
     alert_type = data.get("type", "pv")
+    if alert_type not in {"pv", "namespace"}:
+        return jsonify({"status": "error", "message": "type must be pv or namespace"}), 400
     if alert_type == "pv":
         state["unused_pv"] = 0 if state["unused_pv"] > 0 else 1
         status_msg = "Cleaned up" if state["unused_pv"] == 0 else "Detected"

@@ -1,4 +1,4 @@
-# 🍃 Aegis GreenOps: Cloud-Native FinOps & GreenOps Engine
+# 🍃 Aegis GreenOps: Local Kubernetes FinOps & GreenOps Engine
 > **A Cost-Aware, Carbon-Efficient Kubernetes Scheduling & Monitoring Engine**
 > 
 > *Leveraging eBPF Energy Telemetry, Kubecost Cost Attribution, Karpenter Spot Consolidation, and Real-Time Grid Carbon Intensity APIs to build sustainable, cost-optimized cloud architectures.*
@@ -9,7 +9,27 @@
 
 In modern cloud engineering, managing resource usage is no longer just about CPU and RAM. It requires a dual approach: **FinOps** (maximizing business value per dollar spent) and **GreenOps** (minimizing carbon emissions per computational unit). 
 
-**Aegis GreenOps** is a production-grade Kubernetes automation suite that correlates container-level power draw (Watts) with cloud billing metrics and regional grid carbon intensity (gCO2/kWh). It acts as an intelligent controller that shifts heavy, non-critical batch workloads to clean-energy hours while actively packing infrastructure onto cost-optimal Spot instances using Karpenter.
+**Aegis GreenOps** is a local Kubernetes prototype that correlates workload state, modeled power draw, cost-saving opportunities, and grid carbon intensity. It shifts a non-critical batch workload to cleaner periods and reduces replicas during dirtier periods. The validated path uses Docker and Minikube without an AWS account or cloud spend; AWS/Karpenter files are adaptation templates.
+
+> **Validation boundary:** This repository does not claim real AWS node provisioning or a measured 35% cloud saving. Karpenter, Kubecost, and Kepler integrations are documented as optional/cloud-adaptation components, while the carbon-aware scaling loop is validated locally.
+
+## Zero-cost local quick start
+
+From PowerShell, with Docker Desktop and Minikube installed:
+
+```powershell
+.\local\deploy-local.ps1
+```
+
+The script builds and loads the three local images, deploys the dashboard, scheduler, and batch workload, and prints the dashboard URL. To remove only the application resources:
+
+```powershell
+.\local\destroy-local.ps1
+```
+
+The validated loop starts at `220 gCO2/kWh` with one replica. Move the dashboard slider below `150` and wait for the next CronJob run; the batch Deployment should scale to five replicas. No AWS resources or credentials are needed.
+
+See [docs/resume-and-demo.md](docs/resume-and-demo.md) for the evidence workflow and resume wording.
 
 ### 🧠 Core Competencies Exceeded (Recruiter Talking Points)
 * **eBPF Kernel-Level Telemetry:** Deployed Kepler to calculate power consumption at the container level without code instrumentation, reading host RAPL (Running Average Power Limit) registers.
@@ -230,11 +250,13 @@ else:
 
 ## 🚀 Installation & Verification
 
-### 1. Deploy the Engine
-Run the automated bootstrap script to compile the custom code, load images, and deploy operators:
+### 1. Deploy the zero-cost local engine
+Use the Windows-friendly local script for the validated core demo:
 ```bash
-./start.sh
+./local/deploy-local.ps1
 ```
+
+The legacy `start.sh` path also installs optional Kepler and Kubecost components. It is not required for the core demo and may use substantial local resources. AWS Karpenter templates are only enabled with `INSTALL_CLOUD_TEMPLATES=true`; do not set that flag in the zero-cost local workflow.
 
 ### 2. Teardown
 To cleanly uninstall Kepler, Kubecost, and remove namespaces:

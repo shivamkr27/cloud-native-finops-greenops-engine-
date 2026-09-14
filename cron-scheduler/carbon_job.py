@@ -4,6 +4,8 @@ import sys
 import urllib.request
 import json
 
+from policy import choose_replicas
+
 try:
     from kubernetes import client, config
 except ImportError:
@@ -68,12 +70,18 @@ def main():
     print(f"Current Carbon Intensity: {carbon_intensity} gCO2/kWh")
     print(f"Carbon Threshold: {threshold} gCO2/kWh")
 
-    if carbon_intensity < threshold:
+    target_replicas = choose_replicas(
+        carbon_intensity,
+        threshold=threshold,
+        min_replicas=min_replicas,
+        max_replicas=max_replicas,
+    )
+    if target_replicas == max_replicas:
         print("Grid is GREEN. Shifting workload: scaling UP to run batch jobs.")
-        scale_deployment(deployment_name, namespace, max_replicas)
+        scale_deployment(deployment_name, namespace, target_replicas)
     else:
         print("Grid is DIRTY. Shifting workload: scaling DOWN to conserve emissions.")
-        scale_deployment(deployment_name, namespace, min_replicas)
+        scale_deployment(deployment_name, namespace, target_replicas)
 
 if __name__ == "__main__":
     main()

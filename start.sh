@@ -31,7 +31,7 @@ print_step() {
 # STEP 1: Verify Kubernetes & Minikube
 # ------------------------------------------------------------------------------
 print_step "1/8: Verifying Kubernetes cluster status"
-PROFILE="multi-tenant-platform"
+PROFILE="${MINIKUBE_PROFILE:-aegis-greenops}"
 if ! minikube status -p "${PROFILE}" &>/dev/null; then
     echo -e "${RED}[ERROR] Minikube profile '${PROFILE}' is not running.${NC}"
     exit 1
@@ -48,12 +48,16 @@ helm repo update
 echo -e "${GREEN}[OK] Helm repositories configured.${NC}"
 
 # ------------------------------------------------------------------------------
-# STEP 3: Register Karpenter CRDs
+# STEP 3: Register optional Karpenter CRDs
 # ------------------------------------------------------------------------------
-print_step "3/8: Applying Karpenter CustomResourceDefinitions"
-kubectl apply -f https://raw.githubusercontent.com/aws/karpenter-provider-aws/v0.37.0/pkg/apis/crds/karpenter.sh_nodepools.yaml
-kubectl apply -f https://raw.githubusercontent.com/aws/karpenter-provider-aws/v0.37.0/pkg/apis/crds/karpenter.k8s.aws_ec2nodeclasses.yaml
-echo -e "${GREEN}[OK] Karpenter CRDs registered.${NC}"
+if [[ "${INSTALL_CLOUD_TEMPLATES:-false}" == "true" ]]; then
+    print_step "3/8: Applying optional Karpenter CustomResourceDefinitions"
+    kubectl apply -f https://raw.githubusercontent.com/aws/karpenter-provider-aws/v0.37.0/pkg/apis/crds/karpenter.sh_nodepools.yaml
+    kubectl apply -f https://raw.githubusercontent.com/aws/karpenter-provider-aws/v0.37.0/pkg/apis/crds/karpenter.k8s.aws_ec2nodeclasses.yaml
+    echo -e "${GREEN}[OK] Karpenter CRDs registered.${NC}"
+else
+    echo -e "${YELLOW}[SKIP] AWS Karpenter templates disabled for zero-cost local mode.${NC}"
+fi
 
 # ------------------------------------------------------------------------------
 # STEP 4: Build & Load Application Images
@@ -107,15 +111,19 @@ echo -e "${GREEN}[OK] Kubecost deployed successfully.${NC}"
 # STEP 7: Apply Engine Configurations & Dashboards
 # ------------------------------------------------------------------------------
 print_step "7/8: Applying GreenOps engine resources & dashboards"
-# Apply Karpenter resource templates
-kubectl apply -f karpenter/ec2nodeclass.yaml
-kubectl apply -f karpenter/nodepool.yaml
+if [[ "${INSTALL_CLOUD_TEMPLATES:-false}" == "true" ]]; then
+    kubectl apply -f karpenter/ec2nodeclass.yaml
+    kubectl apply -f karpenter/nodepool.yaml
+fi
 
-# Apply ServiceMonitor for Kepler
-kubectl apply -f kepler-telemetry/servicemonitor.yaml
-
-# Apply Prometheus Rules (alerting rules)
-kubectl apply -f monitoring/prometheus_rules.yaml
+# Apply monitoring CRs only when the Prometheus Operator CRDs exist
+if kubectl api-resources --api-group=monitoring.coreos.com 2>/dev/null | grep -q servicemonitors; then
+    kubectl apply -f kepler-telemetry/servicemonitor.yaml
+    kubectl apply -f monitoring/dashboard-servicemonitor.yaml
+    kubectl apply -f monitoring/prometheus_rules.yaml
+else
+    echo -e "${YELLOW}[SKIP] Prometheus Operator CRDs not detected; monitoring CRs were not applied.${NC}"
+fi
 
 # Apply batch workload, RBAC, and the Carbon Scheduler CronJob
 kubectl apply -f cron-scheduler/batch-deployment.yaml

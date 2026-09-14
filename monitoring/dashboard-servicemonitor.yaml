@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: greenops-dashboard-monitor
+  namespace: monitoring
+  labels:
+    release: prometheus-operator
+spec:
+  selector:
+    matchLabels:
+      app: greenops-dashboard
+  endpoints:
+    - port: http
+      interval: 10s
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - default

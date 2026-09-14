@@ -35,6 +35,7 @@ kubectl delete -f cron-scheduler/rbac.yaml --ignore-not-found
 kubectl delete -f cron-scheduler/batch-deployment.yaml --ignore-not-found
 kubectl delete -f monitoring/prometheus_rules.yaml --ignore-not-found
 kubectl delete -f kepler-telemetry/servicemonitor.yaml --ignore-not-found
+kubectl delete -f monitoring/dashboard-servicemonitor.yaml --ignore-not-found
 kubectl delete -f karpenter/nodepool.yaml --ignore-not-found
 kubectl delete -f karpenter/ec2nodeclass.yaml --ignore-not-found
 kubectl delete configmap greenops-kepler-dashboard-configmap -n monitoring --ignore-not-found

@@ -53,6 +53,18 @@ spec:
           ports:
             - containerPort: 5000
               name: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             limits:
               cpu: 300m
@@ -77,22 +89,3 @@ spec:
       name: http
   selector:
     app: greenops-dashboard
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: greenops-dashboard-monitor
-  namespace: monitoring
-  labels:
-    release: prometheus-operator
-spec:
-  selector:
-    matchLabels:
-      app: greenops-dashboard
-  endpoints:
-    - port: http
-      interval: 10s
-      path: /metrics
-  namespaceSelector:
-    matchNames:
-      - default
