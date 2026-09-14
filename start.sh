@@ -70,7 +70,7 @@ echo -e "${YELLOW}Loading batch-processor into Minikube...${NC}"
 minikube -p "${PROFILE}" image load batch-processor:latest
 
 echo -e "${YELLOW}Building carbon-scheduler image...${NC}"
-docker build -t carbon-scheduler:latest ./cron-scheduler
+docker build -t carbon-scheduler:latest -f ./cron-scheduler/Dockerfile .
 
 echo -e "${YELLOW}Loading carbon-scheduler into Minikube...${NC}"
 minikube -p "${PROFILE}" image load carbon-scheduler:latest
