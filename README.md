@@ -32,16 +32,16 @@ The validated loop starts at `220 gCO2/kWh` with one replica. Move the dashboard
 See [docs/resume-and-demo.md](docs/resume-and-demo.md) for the evidence workflow and resume wording.
 
 ### 🧠 Core Competencies Exceeded (Recruiter Talking Points)
-* **eBPF Kernel-Level Telemetry:** Deployed Kepler to calculate power consumption at the container level without code instrumentation, reading host RAPL (Running Average Power Limit) registers.
-* **Intelligent Workload Shifting:** Built a carbon-aware scheduler that dynamically scales data processing pipelines up/down based on clean energy availability.
-* **Modern Node Consolidation:** Configured Karpenter `NodePools` with Spot instance priorities and automated consolidation policies to optimize node packing and eliminate idle cloud spend.
-* **Unified Metrics Correlation:** Structured Prometheus rules and a customized Grafana dashboard mapping Cost ($) vs Energy (Wh) vs Carbon (gCO2).
+* **Carbon-aware workload shifting:** Built a scheduler that dynamically scales a batch workload based on configurable grid intensity.
+* **Energy and cost observability:** Exposes Prometheus-compatible workload, modeled energy, carbon, and waste-opportunity metrics.
+* **Cloud adaptation design:** Provides Karpenter `NodePool` and `EC2NodeClass` templates for future AWS integration; these are not part of the zero-cost local runtime.
+* **Optional telemetry integrations:** Includes Kepler, Kubecost, Grafana, and Prometheus Operator configuration for an extended setup.
 
 ---
 
-## 🏗️ Production Architecture
+## 🏗️ Reference Architecture
 
-This diagram showcases how data flows from kernel-level eBPF counters all the way to cloud billing APIs and automated Karpenter scaling decisions:
+This diagram shows the intended control and observability flow. The validated path is the local Kubernetes scaling loop; AWS infrastructure and hardware telemetry are extension points:
 
 ```mermaid
 graph TD
