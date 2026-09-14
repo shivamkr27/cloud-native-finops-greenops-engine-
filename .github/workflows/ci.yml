@@ -1,0 +1,34 @@
+name: Validate and build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Validate Python syntax
+        run: python -m compileall -q cron-scheduler greenops-dashboard
+
+      - name: Build batch processor image
+        run: docker build -t batch-processor:ci -f cron-scheduler/Dockerfile.batch cron-scheduler
+
+      - name: Build carbon scheduler image
+        run: docker build -t carbon-scheduler:ci cron-scheduler
+
+      - name: Build dashboard image
+        run: docker build -t greenops-dashboard:ci greenops-dashboard
