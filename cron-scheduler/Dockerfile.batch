@@ -1,0 +1,11 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY batch_processor.py /app/batch_processor.py
+
+EXPOSE 80
+
+ENV PORT=80
+
+CMD ["python", "-u", "/app/batch_processor.py"]

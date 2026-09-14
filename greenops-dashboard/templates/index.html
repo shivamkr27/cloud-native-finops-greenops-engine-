@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenOps & FinOps Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <span class="pulse-dot"></span>
+                <h1>Aegis GreenOps <span>Engine</span></h1>
+            </div>
+            <div class="status-badge">
+                <span id="connection-status">CONNECTED TO K8S</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Panel: Controls -->
+            <section class="card control-card">
+                <h2>Grid Carbon Control</h2>
+                <p class="card-desc">Simulate regional grid carbon intensity to trigger green autoscaling.</p>
+                
+                <div class="intensity-slider-container">
+                    <div class="slider-header">
+                        <span>Carbon Intensity</span>
+                        <span id="slider-value-display">220 gCO2/kWh</span>
+                    </div>
+                    <input type="range" id="carbon-slider" min="50" max="350" value="220" class="slider">
+                    <div class="slider-markers">
+                        <span class="green-text">Clean (&lt;150)</span>
+                        <span class="red-text">Dirty (&gt;150)</span>
+                    </div>
+                </div>
+
+                <div class="grid-status-box" id="grid-status-alert">
+                    <div class="icon">⚡</div>
+                    <div>
+                        <h4 id="grid-status-title">High Carbon Intensity Grid</h4>
+                        <p id="grid-status-desc">Workloads shifted down to conserve emissions.</p>
+                    </div>
+                </div>
+
+                <div class="waste-management">
+                    <h3>FinOps Waste Controls</h3>
+                    <p class="card-desc">Resolve orphaned resources to reclaim cloud budget.</p>
+                    <div class="waste-buttons">
+                        <button id="btn-pv-alert" class="btn-action">
+                            <span class="btn-text">Resolve Unused PVs</span>
+                            <span class="badge" id="pv-badge">1 Active</span>
+                        </button>
+                        <button id="btn-ns-alert" class="btn-action">
+                            <span class="btn-text">Reclaim Orphan Namespaces</span>
+                            <span class="badge" id="ns-badge">2 Active</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Grid Metrics -->
+            <section class="metrics-grid">
+                <!-- Metric 1: Carbon Info -->
+                <div class="metric-card carbon-metric">
+                    <div class="card-header">
+                        <h3>Grid Intensity</h3>
+                        <span class="card-icon">🌱</span>
+                    </div>
+                    <div class="metric-value" id="val-carbon">220</div>
+                    <div class="metric-unit">g CO₂ / kWh</div>
+                    <div class="metric-progress-bar"><div class="progress" id="carbon-progress" style="width: 62%"></div></div>
+                </div>
+
+                <!-- Metric 2: Kepler Wattage -->
+                <div class="metric-card power-metric">
+                    <div class="card-header">
+                        <h3>Kepler Power Telemetry</h3>
+                        <span class="card-icon">🔌</span>
+                    </div>
+                    <div class="metric-value" id="val-watts">12.7</div>
+                    <div class="metric-unit">Watts (RAPL/eBPF)</div>
+                    <div class="metric-subtext">Active load in namespace "default"</div>
+                </div>
+
+                <!-- Metric 3: Karpenter Status -->
+                <div class="metric-card cluster-metric">
+                    <div class="card-header">
+                        <h3>Karpenter Provisioning</h3>
+                        <span class="card-icon">☸️</span>
+                    </div>
+                    <div class="nodes-display">
+                        <div class="node-box spot">
+                            <span class="count" id="val-spot">2</span>
+                            <span class="label">Spot Nodes</span>
+                        </div>
+                        <div class="node-box ondemand">
+                            <span class="count" id="val-ondemand">1</span>
+                            <span class="label">On-Demand</span>
+                        </div>
+                    </div>
+                    <div class="metric-subtext" id="karpenter-summary">Autoscaling Consolidation Policy: Active</div>
+                </div>
+
+                <!-- Metric 4: Workload Shifting -->
+                <div class="metric-card replica-metric">
+                    <div class="card-header">
+                        <h3>Batch Workload</h3>
+                        <span class="card-icon">📊</span>
+                    </div>
+                    <div class="metric-value" id="val-replicas">1</div>
+                    <div class="metric-unit">Replicas Running</div>
+                    <div class="replica-status-indicator">
+                        <span class="dot" id="replica-status-dot"></span>
+                        <span id="replica-status-text">Low-Energy Mode</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Left: FinOps Savings -->
+            <section class="card savings-card">
+                <div class="card-header">
+                    <h2>FinOps Cost Optimization</h2>
+                    <span class="saving-badge">MONTHLY WASTED BUDGET</span>
+                </div>
+                <div class="savings-container">
+                    <div class="savings-value" id="val-savings">$450.00</div>
+                    <p class="savings-subtext">Optimizing and deleting orphan namespaces & persistent volumes will save this much money immediately.</p>
+                </div>
+            </section>
+
+            <!-- Bottom Right: Live Logs -->
+            <section class="card log-card">
+                <h2>Event Logs & Triggers</h2>
+                <p class="card-desc">Real-time scheduling logs, eBPF metrics, and Karpenter consolidation trace.</p>
+                <div class="log-console" id="log-console">
+                    <!-- Logs dynamically loaded -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const carbonSlider = document.getElementById('carbon-slider');
+        const sliderValueDisplay = document.getElementById('slider-value-display');
+        const btnPvAlert = document.getElementById('btn-pv-alert');
+        const btnNsAlert = document.getElementById('btn-ns-alert');
+        const logConsole = document.getElementById('log-console');
+
+        // Update Slider UI immediately
+        carbonSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            sliderValueDisplay.textContent = `${val} gCO2/kWh`;
+            updateCarbonIntensity(val);
+        });
+
+        // Set Carbon Intensity API Call
+        async function updateCarbonIntensity(value) {
+            try {
+                await fetch('/api/carbon-intensity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ carbon_intensity: value })
+                });
+                refreshData();
+            } catch (err) {
+                console.error("Error setting carbon intensity:", err);
+            }
+        }
+
+        // Action Handlers
+        btnPvAlert.addEventListener('click', () => toggleWaste('pv'));
+        btnNsAlert.addEventListener('click', () => toggleWaste('namespace'));
+
+        async function toggleWaste(type) {
+            try {
+                const res = await fetch('/api/toggle-waste-alert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: type })
+                });
+                refreshData();
+            } catch (err) {
+                console.error("Error toggling waste alert:", err);
+            }
+        }
+
+        // Fetch Status and Refresh UI
+        async function refreshData() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                // Update slider value display if not focused
+                sliderValueDisplay.textContent = `${data.carbon_intensity} gCO2/kWh`;
+                carbonSlider.value = data.carbon_intensity;
+
+                // Update gauges
+                document.getElementById('val-carbon').textContent = data.carbon_intensity;
+                document.getElementById('val-watts').textContent = data.total_watts;
+                document.getElementById('val-spot').textContent = data.spot_nodes;
+                document.getElementById('val-ondemand').textContent = data.ondemand_nodes;
+                document.getElementById('val-replicas').textContent = data.live_replicas;
+                document.getElementById('val-savings').textContent = `$${data.waste_savings.toFixed(2)}`;
+
+                // Progress bar
+                const carbonProgress = document.getElementById('carbon-progress');
+                const percent = Math.min((data.carbon_intensity / 350) * 100, 100);
+                carbonProgress.style.width = `${percent}%`;
+
+                // Theme color based on intensity
+                if (data.carbon_intensity < 150) {
+                    carbonProgress.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+                    document.getElementById('grid-status-alert').className = 'grid-status-box green';
+                    document.getElementById('grid-status-title').textContent = 'Clean Green-Energy Grid';
+                    document.getElementById('grid-status-desc').textContent = 'Grid Carbon intensity is low. Batch processing scaled up.';
+                    document.getElementById('replica-status-dot').className = 'dot green';
+                    document.getElementById('replica-status-text').textContent = 'High-Throughput Mode';
+                } else {
+                    carbonProgress.style.background = 'linear-gradient(90deg, #f59e0b, #ef4444)';
+                    document.getElementById('grid-status-alert').className = 'grid-status-box red';
+                    document.getElementById('grid-status-title').textContent = 'High Carbon Intensity Grid';
+                    document.getElementById('grid-status-desc').textContent = 'Grid is powered by fossil fuels. Workloads scaled down.';
+                    document.getElementById('replica-status-dot').className = 'dot orange';
+                    document.getElementById('replica-status-text').textContent = 'Eco-Saving Mode';
+                }
+
+                // Badges
+                const pvBadge = document.getElementById('pv-badge');
+                if (data.unused_pv > 0) {
+                    pvBadge.textContent = '1 Active';
+                    pvBadge.className = 'badge active';
+                } else {
+                    pvBadge.textContent = 'Resolved';
+                    pvBadge.className = 'badge resolved';
+                }
+
+                const nsBadge = document.getElementById('ns-badge');
+                if (data.orphan_namespaces > 0) {
+                    nsBadge.textContent = '2 Active';
+                    nsBadge.className = 'badge active';
+                } else {
+                    nsBadge.textContent = 'Resolved';
+                    nsBadge.className = 'badge resolved';
+                }
+
+                // Log box
+                logConsole.innerHTML = '';
+                data.logs.forEach(log => {
+                    const logLine = document.createElement('div');
+                    logLine.className = 'log-line';
+                    logLine.innerHTML = `<span class="log-time">[${log.time}]</span> <span class="log-msg">${log.message}</span>`;
+                    logConsole.appendChild(logLine);
+                });
+                logConsole.scrollTop = logConsole.scrollHeight;
+
+            } catch (err) {
+                console.error("Error fetching status:", err);
+                document.getElementById('connection-status').textContent = 'OFFLINE';
+                document.getElementById('connection-status').className = 'offline';
+            }
+        }
+
+        // Auto Refresh every 3 seconds
+        setInterval(refreshData, 3000);
+        refreshData();
+    </script>
+</body>
+</html>

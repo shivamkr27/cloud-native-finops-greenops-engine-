@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: greenops-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-operator
+spec:
+  groups:
+    - name: greenops.rules
+      rules:
+        - alert: HighCarbonIntensity
+          expr: greenops_grid_carbon_intensity_gco2_kwh > 200
+          for: 1m
+          labels:
+            severity: warning
+            category: greenops
+          annotations:
+            summary: "Grid Carbon Intensity is High"
+            description: "Current grid intensity is {{ $value }} gCO2/kWh, which exceeds the green threshold."
+
+        - alert: UnusedPersistentVolume
+          expr: kube_persistentvolume_status_phase{phase="Available"} > 0 or greenops_finops_waste_unused_pv > 0
+          for: 1m
+          labels:
+            severity: warning
+            category: finops
+          annotations:
+            summary: "Unused Persistent Volume Detected"
+            description: "One or more persistent volumes are currently unattached and wasting cloud spend."
+
+        - alert: FinOpsWasteOrphanNamespace
+          expr: greenops_finops_waste_orphan_namespaces > 0
+          for: 1m
+          labels:
+            severity: warning
+            category: finops
+          annotations:
+            summary: "Orphan Namespaces Detected"
+            description: "Namespace has been identified as orphan/idle and should be terminated to save costs."
+
+        - alert: HighEnergyPod
+          expr: sum by (pod_name) (rate(kepler_container_joules_total[1m])) > 15
+          for: 2m
+          labels:
+            severity: info
+            category: greenops
+          annotations:
+            summary: "High Energy Consumption Pod"
+            description: "Pod {{ $labels.pod_name }} is consuming {{ $value }} Watts."

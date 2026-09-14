@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: carbon-scheduler
+  namespace: default
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: carbon-scheduler-sa
+          containers:
+            - name: carbon-scheduler
+              image: carbon-scheduler:latest
+              imagePullPolicy: Never
+              env:
+                - name: CARBON_THRESHOLD
+                  value: "150"
+                - name: GRID_API_URL
+                  value: "http://greenops-dashboard.default.svc.cluster.local/api/carbon-intensity"
+                - name: TARGET_DEPLOYMENT
+                  value: "batch-processor"
+                - name: TARGET_NAMESPACE
+                  value: "default"
+                - name: MIN_REPLICAS
+                  value: "1"
+                - name: MAX_REPLICAS
+                  value: "5"
+          restartPolicy: OnFailure

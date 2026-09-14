@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-processor
+  namespace: default
+  labels:
+    app: batch-processor
+    team: data-science
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: batch-processor
+  template:
+    metadata:
+      labels:
+        app: batch-processor
+        team: data-science
+    spec:
+      containers:
+        - name: processor
+          image: batch-processor:latest
+          imagePullPolicy: Never
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-processor
+  namespace: default
+  labels:
+    app: batch-processor
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: batch-processor

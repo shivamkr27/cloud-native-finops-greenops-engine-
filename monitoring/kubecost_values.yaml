@@ -1,0 +1,34 @@
+global:
+  clusterId: "greenops-cluster"
+
+persistentVolume:
+  enabled: false
+
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  alertmanager:
+    persistentVolume:
+      enabled: false
+  pushgateway:
+    persistentVolume:
+      enabled: false
+
+networkCosts:
+  enabled: false
+
+ingress:
+  enabled: false
+
+kubecostProductConfigs:
+  clusterName: greenops-minikube
+  clusterId: "greenops-cluster"

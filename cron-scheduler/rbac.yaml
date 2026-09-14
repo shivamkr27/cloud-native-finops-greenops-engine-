@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: carbon-scheduler-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: carbon-scheduler-role
+  namespace: default
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: carbon-scheduler-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: carbon-scheduler-sa
+    namespace: default
+roleRef:
+  kind: Role
+  name: carbon-scheduler-role
+  apiGroup: rbac.authorization.k8s.io
