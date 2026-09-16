@@ -31,7 +31,7 @@ jobs:
         run: docker build -t batch-processor:ci -f cron-scheduler/Dockerfile.batch cron-scheduler
 
       - name: Build carbon scheduler image
-        run: docker build -t carbon-scheduler:ci cron-scheduler
+        run: docker build -t carbon-scheduler:ci -f cron-scheduler/Dockerfile .
 
       - name: Build dashboard image
         run: docker build -t greenops-dashboard:ci -f greenops-dashboard/Dockerfile .
